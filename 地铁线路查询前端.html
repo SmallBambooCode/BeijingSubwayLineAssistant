@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>地铁最短路径查询</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        margin-top: 50px;
+        background-color: #f8f9fa;
+    }
+
+    h1 {
+        color: #343a40;
+    }
+
+    label {
+        margin-top: 10px;
+    }
+
+    input[type="text"] {
+        width: 300px;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+    }
+
+    button {
+        color: #fff;
+        background-color: #007bff;
+        border-color: #007bff;
+        padding: 10px 15px;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: #0056b3;
+        border-color: #004085;
+    }
+
+    #result {
+        margin-top: 20px;
+        padding: 15px;
+        width: 90%;
+        max-width: 1200px;
+        background-color: #e9ecef;
+        border-radius: 5px;
+        word-wrap: break-word;
+    }
+</style>
+<script>
+function queryPath() {
+    // 获取用户输入的起点和终点
+    var startStation = document.getElementById("start").value;
+    var endStation = document.getElementById("end").value;
+
+    // 发送POST请求到Flask后端
+    fetch("http://127.0.0.1:5000/get_path", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        // 在请求体中发送起点和终点以及key
+        body: JSON.stringify({
+            "start": startStation,
+            "end": endStation,
+            "key": "xz_test",
+        }),
+    })
+    .then(response => {
+        // 判断状态码是否为200
+        if(response.ok) { 
+            // 若是200，则返回json解析后的数据和ok状态
+            return response.json().then(data => ({ok: response.ok, data}));
+        } else {
+            // 若不是200，抛出错误，终止promise链
+            throw new Error('网络请求不成功或站点填写不正确');
+        }
+    })
+    .then(({ok, data}) => {
+        // 使用之前response.ok的值和解析后的数据
+        if(ok) {
+            // 将换行符\n替换为HTML换行<br>
+            var resultWithBreaks = data.message + "<br>" + data.path.replace(/\n/g, "<br>");
+            document.getElementById("result").innerHTML = resultWithBreaks;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // 显示错误信息
+        document.getElementById("result").textContent = '请求失败: ' + error.message;
+    });
+}
+
+// 页面加载后，设置按钮的点击事件
+window.onload = function() {
+    document.getElementById("queryBtn").onclick = queryPath;
+};
+</script>
+</head>
+<body>
+<h1>地铁最短路径查询</h1>
+<div>
+    <label for="start">起点站:</label>
+    <input type="text" id="start" placeholder="输入起点站名">
+</div>
+<div>
+    <label for="end">终点站:</label>
+    <input type="text" id="end" placeholder="输入终点站名">
+</div>
+<button id="queryBtn">查询路径</button>
+<div id="result"><center>点击查询路径按钮开始查询吧！</center></div>
+</body>
+</html>
